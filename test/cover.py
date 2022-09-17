@@ -41,4 +41,4 @@ if __name__ == '__main__':
         annotate_html.report_as_html( data, 'cover-reports', [] )
     
     else:
-        print 'Invalid mode %s' % mode
+        print(('Invalid mode %s' % mode))

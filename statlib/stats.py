@@ -254,7 +254,7 @@ For further references see the U{python-statlib homepage
 ##              changed name of skewness and askewness to skew and askew
 ##              fixed (a)histogram (which sometimes counted points <lowerlimit)
 
-import pstat               # required 3rd party module
+from . import pstat               # required 3rd party module
 import math, string, copy  # required python modules
 from types import *
 
@@ -277,15 +277,15 @@ class Dispatch:
         self._dispatch = {}
         for func, types in tuples:
             for t in types:
-                if t in self._dispatch.keys():
-                    raise ValueError, "can't have two dispatches on "+str(t)
+                if t in list(self._dispatch.keys()):
+                    raise ValueError("can't have two dispatches on "+str(t))
                 self._dispatch[t] = func
-        self._types = self._dispatch.keys()
+        self._types = list(self._dispatch.keys())
 
     def __call__(self, arg1, *args, **kw):
         if type(arg1) not in self._types:
-            raise TypeError, "don't know how to dispatch %s arguments" %  type(arg1)
-        return apply(self._dispatch[type(arg1)], (arg1,) + args, kw)
+            raise TypeError("don't know how to dispatch %s arguments" %  type(arg1))
+        return self._dispatch[type(arg1)](*(arg1,) + args, **kw)
 
 
 ##########################################################################
@@ -504,7 +504,7 @@ def lscoreatpercentile (inlist, percent):
     Usage:   lscoreatpercentile(inlist,percent)
     """
     if percent > 1:
-        print "\nDividing percent>1 by 100 in lscoreatpercentile().\n"
+        print("\nDividing percent>1 by 100 in lscoreatpercentile().\n")
         percent = percent / 100.0
     targetcf = percent*len(inlist)
     h, lrl, binsize, extras = histogram(inlist)
@@ -542,8 +542,8 @@ def lhistogram (inlist,numbins=10,defaultreallimits=None,printextras=0):
     Usage:   lhistogram (inlist, numbins=10, defaultreallimits=None,suppressoutput=0)
     Returns: list of bin values, lowerreallimit, binsize, extrapoints
     """
-    if (defaultreallimits <> None):
-        if type(defaultreallimits) not in [ListType,TupleType] or len(defaultreallimits)==1: # only one limit given, assumed to be lower one & upper is calc'd
+    if (defaultreallimits != None):
+        if type(defaultreallimits) not in [list,tuple] or len(defaultreallimits)==1: # only one limit given, assumed to be lower one & upper is calc'd
             lowerreallimit = defaultreallimits
             upperreallimit = 1.000001 * max(inlist)
         else: # assume both limits given
@@ -566,7 +566,7 @@ def lhistogram (inlist,numbins=10,defaultreallimits=None,printextras=0):
         except:
             extrapoints = extrapoints + 1
     if (extrapoints > 0 and printextras == 1):
-        print '\nPoints outside given histogram range =',extrapoints
+        print('\nPoints outside given histogram range =',extrapoints)
     return (bins, lowerreallimit, binsize, extrapoints)
 
 
@@ -629,8 +629,8 @@ def lobrientransform(*args):
     for j in range(k):
         if v[j] - mean(nargs[j]) > TINY:
             check = 0
-    if check <> 1:
-        raise ValueError, 'Problem in obrientransform.'
+    if check != 1:
+        raise ValueError('Problem in obrientransform.')
     else:
         return nargs
 
@@ -808,11 +808,11 @@ def lpaired(x,y):
     """
     samples = ''
     while samples not in ['i','r','I','R','c','C']:
-        print '\nIndependent or related samples, or correlation (i,r,c): ',
-        samples = raw_input()
+        print('\nIndependent or related samples, or correlation (i,r,c): ', end=' ')
+        samples = input()
 
     if samples in ['i','I','r','R']:
-        print '\nComparing variances ...',
+        print('\nComparing variances ...', end=' ')
         # USE O'BRIEN'S TEST FOR HOMOGENEITY OF VARIANCE, Maxwell & delaney, p.112
         r = obrientransform(x,y)
         f,p = F_oneway(pstat.colex(r,0),pstat.colex(r,1))
@@ -820,45 +820,45 @@ def lpaired(x,y):
             vartype='unequal, p='+str(round(p,4))
         else:
             vartype='equal'
-        print vartype
+        print(vartype)
         if samples in ['i','I']:
             if vartype[0]=='e':
                 t,p = ttest_ind(x,y,0)
-                print '\nIndependent samples t-test:  ', round(t,4),round(p,4)
+                print('\nIndependent samples t-test:  ', round(t,4),round(p,4))
             else:
                 if len(x)>20 or len(y)>20:
                     z,p = ranksums(x,y)
-                    print '\nRank Sums test (NONparametric, n>20):  ', round(z,4),round(p,4)
+                    print('\nRank Sums test (NONparametric, n>20):  ', round(z,4),round(p,4))
                 else:
                     u,p = mannwhitneyu(x,y)
-                    print '\nMann-Whitney U-test (NONparametric, ns<20):  ', round(u,4),round(p,4)
+                    print('\nMann-Whitney U-test (NONparametric, ns<20):  ', round(u,4),round(p,4))
 
         else:  # RELATED SAMPLES
             if vartype[0]=='e':
                 t,p = ttest_rel(x,y,0)
-                print '\nRelated samples t-test:  ', round(t,4),round(p,4)
+                print('\nRelated samples t-test:  ', round(t,4),round(p,4))
             else:
                 t,p = ranksums(x,y)
-                print '\nWilcoxon T-test (NONparametric):  ', round(t,4),round(p,4)
+                print('\nWilcoxon T-test (NONparametric):  ', round(t,4),round(p,4))
     else:  # CORRELATION ANALYSIS
         corrtype = ''
         while corrtype not in ['c','C','r','R','d','D']:
-            print '\nIs the data Continuous, Ranked, or Dichotomous (c,r,d): ',
-            corrtype = raw_input()
+            print('\nIs the data Continuous, Ranked, or Dichotomous (c,r,d): ', end=' ')
+            corrtype = input()
         if corrtype in ['c','C']:
             m,b,r,p,see = linregress(x,y)
-            print '\nLinear regression for continuous variables ...'
+            print('\nLinear regression for continuous variables ...')
             lol = [['Slope','Intercept','r','Prob','SEestimate'],[round(m,4),round(b,4),round(r,4),round(p,4),round(see,4)]]
             pstat.printcc(lol)
         elif corrtype in ['r','R']:
             r,p = spearmanr(x,y)
-            print '\nCorrelation for ranked variables ...'
-            print "Spearman's r: ",round(r,4),round(p,4)
+            print('\nCorrelation for ranked variables ...')
+            print("Spearman's r: ",round(r,4),round(p,4))
         else: # DICHOTOMOUS
             r,p = pointbiserialr(x,y)
-            print '\nAssuming x contains a dichotomous variable ...'
-            print 'Point Biserial r: ',round(r,4),round(p,4)
-    print '\n\n'
+            print('\nAssuming x contains a dichotomous variable ...')
+            print('Point Biserial r: ',round(r,4),round(p,4))
+    print('\n\n')
     return None
 
 
@@ -872,11 +872,11 @@ def lpearsonr(x,y):
     Returns: Pearson's r value, two-tailed p-value
     """
     TINY = 1.0e-30
-    if len(x) <> len(y):
-        raise ValueError, 'Input values not paired in pearsonr.  Aborting.'
+    if len(x) != len(y):
+        raise ValueError('Input values not paired in pearsonr.  Aborting.')
     n = len(x)
-    x = map(float,x)
-    y = map(float,y)
+    x = list(map(float,x))
+    y = list(map(float,y))
     xmean = mean(x)
     ymean = mean(y)
     r_num = n*(summult(x,y)) - sum(x)*sum(y)
@@ -911,8 +911,8 @@ def lspearmanr(x,y):
     Returns: Spearman's r, two-tailed p-value
     """
     TINY = 1e-30
-    if len(x) <> len(y):
-        raise ValueError, 'Input values not paired in spearmanr.  Aborting.'
+    if len(x) != len(y):
+        raise ValueError('Input values not paired in spearmanr.  Aborting.')
     n = len(x)
     rankx = rankdata(x)
     ranky = rankdata(y)
@@ -936,14 +936,14 @@ def lpointbiserialr(x,y):
     Returns: Point-biserial r, two-tailed p-value
     """
     TINY = 1e-30
-    if len(x) <> len(y):
-        raise ValueError, 'INPUT VALUES NOT PAIRED IN pointbiserialr.  ABORTING.'
+    if len(x) != len(y):
+        raise ValueError('INPUT VALUES NOT PAIRED IN pointbiserialr.  ABORTING.')
     data = pstat.abut(x,y)
     categories = pstat.unique(x)
-    if len(categories) <> 2:
-        raise ValueError, "Exactly 2 categories required for pointbiserialr()."
+    if len(categories) != 2:
+        raise ValueError("Exactly 2 categories required for pointbiserialr().")
     else:   # there are 2 categories, continue
-        codemap = pstat.abut(categories,range(2))
+        codemap = pstat.abut(categories,list(range(2)))
         recoded = pstat.recode(data,codemap,0)
         x = pstat.linexand(data,0,categories[0])
         y = pstat.linexand(data,0,categories[1])
@@ -1001,11 +1001,11 @@ def llinregress(x,y):
     Returns: slope, intercept, r, two-tailed prob, sterr-of-estimate
     """
     TINY = 1.0e-15
-    if len(x) <> len(y):
-        raise ValueError, 'Input values not paired in linregress.  Aborting.'
+    if len(x) != len(y):
+        raise ValueError('Input values not paired in linregress.  Aborting.')
     n = len(x)
-    x = map(float,x)
-    y = map(float,y)
+    x = list(map(float,x))
+    y = list(map(float,y))
     xmean = mean(x)
     ymean = mean(y)
     r_num = float(n*(summult(x,y)) - sum(x)*sum(y))
@@ -1046,7 +1046,7 @@ def lttest_1samp(a,popmean,printit=0,name='Sample',writemode='a'):
     t = (x-popmean)/math.sqrt(svar*(1.0/n))
     prob = betai(0.5*df,0.5,float(df)/(df+t*t))
 
-    if printit <> 0:
+    if printit != 0:
         statname = 'Single-sample T-test.'
         outputpairedstats(printit,writemode,
                           'Population','--',popmean,0,0,0,
@@ -1077,7 +1077,7 @@ def lttest_ind (a, b, printit=0, name1='Samp1', name2='Samp2', writemode='a'):
     t = (x1-x2)/math.sqrt(svar*(1.0/n1 + 1.0/n2))
     prob = betai(0.5*df,0.5,df/(df+t*t))
 
-    if printit <> 0:
+    if printit != 0:
         statname = 'Independent samples T-test.'
         outputpairedstats(printit,writemode,
                           name1,n1,x1,v1,min(a),max(a),
@@ -1097,8 +1097,8 @@ def lttest_rel (a,b,printit=0,name1='Sample1',name2='Sample2',writemode='a'):
     Usage:   lttest_rel(a,b,printit=0,name1='Sample1',name2='Sample2',writemode='a')
     Returns: t-value, two-tailed prob
     """
-    if len(a)<>len(b):
-        raise ValueError, 'Unequal length lists in ttest_rel.'
+    if len(a)!=len(b):
+        raise ValueError('Unequal length lists in ttest_rel.')
     x1 = mean(a)
     x2 = mean(b)
     v1 = var(a)
@@ -1113,7 +1113,7 @@ def lttest_rel (a,b,printit=0,name1='Sample1',name2='Sample2',writemode='a'):
     t = (x1-x2)/sd
     prob = betai(0.5*df,0.5,df/(df+t*t))
 
-    if printit <> 0:
+    if printit != 0:
         statname = 'Related samples T-test.'
         outputpairedstats(printit,writemode,
                           name1,n,x1,v1,min(a),max(a),
@@ -1202,7 +1202,7 @@ def lmannwhitneyu(x,y):
     smallu = min(u1,u2)
     T = math.sqrt(tiecorrect(ranked))  # correction factor for tied scores
     if T == 0:
-        raise ValueError, 'All numbers are identical in lmannwhitneyu'
+        raise ValueError('All numbers are identical in lmannwhitneyu')
     sd = math.sqrt(T*n1*n2*(n1+n2+1)/12.0)
     z = abs((bigu-n1*n2/2.0) / sd)  # normal approximation for prob calc
     return smallu, 1.0 - zprob(z)
@@ -1263,15 +1263,15 @@ def lwilcoxont(x,y):
     Usage:   lwilcoxont(x,y)
     Returns: a t-statistic, two-tail probability estimate
     """
-    if len(x) <> len(y):
-        raise ValueError, 'Unequal N in wilcoxont.  Aborting.'
+    if len(x) != len(y):
+        raise ValueError('Unequal N in wilcoxont.  Aborting.')
     d=[]
     for i in range(len(x)):
         diff = x[i] - y[i]
-        if diff <> 0:
+        if diff != 0:
             d.append(diff)
     count = len(d)
-    absd = map(abs,d)
+    absd = list(map(abs,d))
     absranked = rankdata(absd)
     r_plus = 0.0
     r_minus = 0.0
@@ -1301,7 +1301,7 @@ def lkruskalwallish(*args):
     args = list(args)
     n = [0]*len(args)
     all = []
-    n = map(len,args)
+    n = list(map(len,args))
     for i in range(len(args)):
         all = all + args[i]
     ranked = rankdata(all)
@@ -1318,7 +1318,7 @@ def lkruskalwallish(*args):
     h = 12.0 / (totaln*(totaln+1)) * ssbn - 3*(totaln+1)
     df = len(args) - 1
     if T == 0:
-        raise ValueError, 'All numbers are identical in lkruskalwallish'
+        raise ValueError('All numbers are identical in lkruskalwallish')
     h = h / float(T)
     return h, chisqprob(h,df)
 
@@ -1337,9 +1337,9 @@ def lfriedmanchisquare(*args):
     """
     k = len(args)
     if k < 3:
-        raise ValueError, 'Less than 3 levels.  Friedman test not appropriate.'
+        raise ValueError('Less than 3 levels.  Friedman test not appropriate.')
     n = len(args[0])
-    data = apply(pstat.abut,tuple(args))
+    data = pstat.abut(*tuple(args))
     for i in range(len(data)):
         data[i] = rankdata(data[i])
     ssbn = 0
@@ -1535,7 +1535,7 @@ def lbetacf(a,b,x):
         bz = 1.0
         if (abs(az-aold)<(EPS*abs(az))):
             return az
-    print 'a or b too big, or ITMAX too small in Betacf.'
+    print('a or b too big, or ITMAX too small in Betacf.')
 
 
 def lgammln(xx):
@@ -1572,7 +1572,7 @@ def lbetai(a,b,x):
     Usage:   lbetai(a,b,x)
     """
     if (x<0.0 or x>1.0):
-        raise ValueError, 'Bad x in lbetai'
+        raise ValueError('Bad x in lbetai')
     if (x==0.0 or x==1.0):
         bt = 0.0
     else:
@@ -1601,10 +1601,10 @@ def lF_oneway(*lists):
     vars = [0]*a
     ns = [0]*a
     alldata = []
-    tmp = map(N.array,lists)
-    means = map(amean,tmp)
-    vars = map(avar,tmp)
-    ns = map(len,lists)
+    tmp = list(map(N.array,lists))
+    means = list(map(amean,tmp))
+    vars = list(map(avar,tmp))
+    ns = list(map(len,lists))
     for i in range(len(lists)):
         alldata = alldata + lists[i]
     alldata = N.array(alldata)
@@ -1650,7 +1650,7 @@ def writecc (listoflists,file,writetype='w',extra=2):
     Usage:   writecc (listoflists,file,writetype='w',extra=2)
     Returns: None
     """
-    if type(listoflists[0]) not in [ListType,TupleType]:
+    if type(listoflists[0]) not in [list,tuple]:
         listoflists = [listoflists]
     outfile = open(file,writetype)
     rowstokill = []
@@ -1664,8 +1664,8 @@ def writecc (listoflists,file,writetype='w',extra=2):
     maxsize = [0]*len(list2print[0])
     for col in range(len(list2print[0])):
         items = pstat.colex(list2print,col)
-        items = map(pstat.makestr,items)
-        maxsize[col] = max(map(len,items)) + extra
+        items = list(map(pstat.makestr,items))
+        maxsize[col] = max(list(map(len,items))) + extra
     for row in listoflists:
         if row == ['\n'] or row == '\n':
             outfile.write('\n')
@@ -1744,8 +1744,8 @@ def lsummult (list1,list2):
 
     Usage:   lsummult(list1,list2)
     """
-    if len(list1) <> len(list2):
-        raise ValueError, "Lists not equal length in summult."
+    if len(list1) != len(list2):
+        raise ValueError("Lists not equal length in summult.")
     s = 0
     for item1,item2 in pstat.abut(list1,list2):
         s = s + item1*item2
@@ -1787,7 +1787,7 @@ def lshellsort(inlist):
     """
     n = len(inlist)
     svec = copy.deepcopy(inlist)
-    ivec = range(n)
+    ivec = list(range(n))
     gap = n/2   # integer division needed
     while gap >0:
         for i in range(gap,n):
@@ -1819,7 +1819,7 @@ def lrankdata(inlist):
     for i in range(n):
         sumranks = sumranks + i
         dupcount = dupcount + 1
-        if i==n-1 or svec[i] <> svec[i+1]:
+        if i==n-1 or svec[i] != svec[i+1]:
             averank = sumranks / float(dupcount) + 1
             for j in range(i-dupcount+1,i+1):
                 newlist[ivec[j]] = averank
@@ -1849,12 +1849,12 @@ def outputpairedstats(fname,writemode,name1,n1,m1,se1,min1,max1,name2,n2,m2,se2,
     title = [['Name','N','Mean','SD','Min','Max']]
     lofl = title+[[name1,n1,round(m1,3),round(math.sqrt(se1),3),min1,max1],
                   [name2,n2,round(m2,3),round(math.sqrt(se2),3),min2,max2]]
-    if type(fname)<>StringType or len(fname)==0:
-        print
-        print statname
-        print
+    if type(fname)!=StringType or len(fname)==0:
+        print()
+        print(statname)
+        print()
         pstat.printcc(lofl)
-        print
+        print()
         try:
             if stat.shape == ():
                 stat = stat[0]
@@ -1862,8 +1862,8 @@ def outputpairedstats(fname,writemode,name1,n1,m1,se1,min1,max1,name2,n2,m2,se2,
                 prob = prob[0]
         except:
             pass
-        print 'Test statistic = ',round(stat,3),'   p = ',round(prob,3),suffix
-        print
+        print('Test statistic = ',round(stat,3),'   p = ',round(prob,3),suffix)
+        print()
     else:
         file = open(fname,writemode)
         file.write('\n'+statname+'\n\n')
@@ -1914,89 +1914,89 @@ def lfindwithin (data):
 #########################################################
 
 ## CENTRAL TENDENCY:
-geometricmean = Dispatch ( (lgeometricmean, (ListType, TupleType)), )
-harmonicmean = Dispatch ( (lharmonicmean, (ListType, TupleType)), )
-mean = Dispatch ( (lmean, (ListType, TupleType)), )
-median = Dispatch ( (lmedian, (ListType, TupleType)), )
-medianscore = Dispatch ( (lmedianscore, (ListType, TupleType)), )
-mode = Dispatch ( (lmode, (ListType, TupleType)), )
+geometricmean = Dispatch ( (lgeometricmean, (list, tuple)), )
+harmonicmean = Dispatch ( (lharmonicmean, (list, tuple)), )
+mean = Dispatch ( (lmean, (list, tuple)), )
+median = Dispatch ( (lmedian, (list, tuple)), )
+medianscore = Dispatch ( (lmedianscore, (list, tuple)), )
+mode = Dispatch ( (lmode, (list, tuple)), )
 
 ## MOMENTS:
-moment = Dispatch ( (lmoment, (ListType, TupleType)), )
-variation = Dispatch ( (lvariation, (ListType, TupleType)), )
-skew = Dispatch ( (lskew, (ListType, TupleType)), )
-kurtosis = Dispatch ( (lkurtosis, (ListType, TupleType)), )
-describe = Dispatch ( (ldescribe, (ListType, TupleType)), )
+moment = Dispatch ( (lmoment, (list, tuple)), )
+variation = Dispatch ( (lvariation, (list, tuple)), )
+skew = Dispatch ( (lskew, (list, tuple)), )
+kurtosis = Dispatch ( (lkurtosis, (list, tuple)), )
+describe = Dispatch ( (ldescribe, (list, tuple)), )
 
 ## FREQUENCY STATISTICS:
-itemfreq = Dispatch ( (litemfreq, (ListType, TupleType)), )
-scoreatpercentile = Dispatch ( (lscoreatpercentile, (ListType, TupleType)), )
-percentileofscore = Dispatch ( (lpercentileofscore, (ListType, TupleType)), )
-histogram = Dispatch ( (lhistogram, (ListType, TupleType)), )
-cumfreq = Dispatch ( (lcumfreq, (ListType, TupleType)), )
-relfreq = Dispatch ( (lrelfreq, (ListType, TupleType)), )
+itemfreq = Dispatch ( (litemfreq, (list, tuple)), )
+scoreatpercentile = Dispatch ( (lscoreatpercentile, (list, tuple)), )
+percentileofscore = Dispatch ( (lpercentileofscore, (list, tuple)), )
+histogram = Dispatch ( (lhistogram, (list, tuple)), )
+cumfreq = Dispatch ( (lcumfreq, (list, tuple)), )
+relfreq = Dispatch ( (lrelfreq, (list, tuple)), )
 
 ## VARIABILITY:
-obrientransform = Dispatch ( (lobrientransform, (ListType, TupleType)), )
-samplevar = Dispatch ( (lsamplevar, (ListType, TupleType)), )
-samplestdev = Dispatch ( (lsamplestdev, (ListType, TupleType)), )
-var = Dispatch ( (lvar, (ListType, TupleType)), )
-stdev = Dispatch ( (lstdev, (ListType, TupleType)), )
-sterr = Dispatch ( (lsterr, (ListType, TupleType)), )
-sem = Dispatch ( (lsem, (ListType, TupleType)), )
-z = Dispatch ( (lz, (ListType, TupleType)), )
-zs = Dispatch ( (lzs, (ListType, TupleType)), )
+obrientransform = Dispatch ( (lobrientransform, (list, tuple)), )
+samplevar = Dispatch ( (lsamplevar, (list, tuple)), )
+samplestdev = Dispatch ( (lsamplestdev, (list, tuple)), )
+var = Dispatch ( (lvar, (list, tuple)), )
+stdev = Dispatch ( (lstdev, (list, tuple)), )
+sterr = Dispatch ( (lsterr, (list, tuple)), )
+sem = Dispatch ( (lsem, (list, tuple)), )
+z = Dispatch ( (lz, (list, tuple)), )
+zs = Dispatch ( (lzs, (list, tuple)), )
 
 ## TRIMMING FCNS:
-trimboth = Dispatch ( (ltrimboth, (ListType, TupleType)), )
-trim1 = Dispatch ( (ltrim1, (ListType, TupleType)), )
+trimboth = Dispatch ( (ltrimboth, (list, tuple)), )
+trim1 = Dispatch ( (ltrim1, (list, tuple)), )
 
 ## CORRELATION FCNS:
-paired = Dispatch ( (lpaired, (ListType, TupleType)), )
-pearsonr = Dispatch ( (lpearsonr, (ListType, TupleType)), )
-spearmanr = Dispatch ( (lspearmanr, (ListType, TupleType)), )
-pointbiserialr = Dispatch ( (lpointbiserialr, (ListType, TupleType)), )
-kendalltau = Dispatch ( (lkendalltau, (ListType, TupleType)), )
-linregress = Dispatch ( (llinregress, (ListType, TupleType)), )
+paired = Dispatch ( (lpaired, (list, tuple)), )
+pearsonr = Dispatch ( (lpearsonr, (list, tuple)), )
+spearmanr = Dispatch ( (lspearmanr, (list, tuple)), )
+pointbiserialr = Dispatch ( (lpointbiserialr, (list, tuple)), )
+kendalltau = Dispatch ( (lkendalltau, (list, tuple)), )
+linregress = Dispatch ( (llinregress, (list, tuple)), )
 
 ## INFERENTIAL STATS:
-ttest_1samp = Dispatch ( (lttest_1samp, (ListType, TupleType)), )
-ttest_ind = Dispatch ( (lttest_ind, (ListType, TupleType)), )
-ttest_rel = Dispatch ( (lttest_rel, (ListType, TupleType)), )
-chisquare = Dispatch ( (lchisquare, (ListType, TupleType)), )
-ks_2samp = Dispatch ( (lks_2samp, (ListType, TupleType)), )
-mannwhitneyu = Dispatch ( (lmannwhitneyu, (ListType, TupleType)), )
-ranksums = Dispatch ( (lranksums, (ListType, TupleType)), )
-tiecorrect = Dispatch ( (ltiecorrect, (ListType, TupleType)), )
-wilcoxont = Dispatch ( (lwilcoxont, (ListType, TupleType)), )
-kruskalwallish = Dispatch ( (lkruskalwallish, (ListType, TupleType)), )
-friedmanchisquare = Dispatch ( (lfriedmanchisquare, (ListType, TupleType)), )
+ttest_1samp = Dispatch ( (lttest_1samp, (list, tuple)), )
+ttest_ind = Dispatch ( (lttest_ind, (list, tuple)), )
+ttest_rel = Dispatch ( (lttest_rel, (list, tuple)), )
+chisquare = Dispatch ( (lchisquare, (list, tuple)), )
+ks_2samp = Dispatch ( (lks_2samp, (list, tuple)), )
+mannwhitneyu = Dispatch ( (lmannwhitneyu, (list, tuple)), )
+ranksums = Dispatch ( (lranksums, (list, tuple)), )
+tiecorrect = Dispatch ( (ltiecorrect, (list, tuple)), )
+wilcoxont = Dispatch ( (lwilcoxont, (list, tuple)), )
+kruskalwallish = Dispatch ( (lkruskalwallish, (list, tuple)), )
+friedmanchisquare = Dispatch ( (lfriedmanchisquare, (list, tuple)), )
 
 ## PROBABILITY CALCS:
-chisqprob = Dispatch ( (lchisqprob, (IntType, FloatType)), )
-zprob = Dispatch ( (lzprob, (IntType, FloatType)), )
-ksprob = Dispatch ( (lksprob, (IntType, FloatType)), )
-fprob = Dispatch ( (lfprob, (IntType, FloatType)), )
-betacf = Dispatch ( (lbetacf, (IntType, FloatType)), )
-betai = Dispatch ( (lbetai, (IntType, FloatType)), )
-erfcc = Dispatch ( (lerfcc, (IntType, FloatType)), )
-gammln = Dispatch ( (lgammln, (IntType, FloatType)), )
+chisqprob = Dispatch ( (lchisqprob, (int, float)), )
+zprob = Dispatch ( (lzprob, (int, float)), )
+ksprob = Dispatch ( (lksprob, (int, float)), )
+fprob = Dispatch ( (lfprob, (int, float)), )
+betacf = Dispatch ( (lbetacf, (int, float)), )
+betai = Dispatch ( (lbetai, (int, float)), )
+erfcc = Dispatch ( (lerfcc, (int, float)), )
+gammln = Dispatch ( (lgammln, (int, float)), )
 
 ## ANOVA FUNCTIONS:
-F_oneway = Dispatch ( (lF_oneway, (ListType, TupleType)), )
-F_value = Dispatch ( (lF_value, (ListType, TupleType)), )
+F_oneway = Dispatch ( (lF_oneway, (list, tuple)), )
+F_value = Dispatch ( (lF_value, (list, tuple)), )
 
 ## SUPPORT FUNCTIONS:
-incr = Dispatch ( (lincr, (ListType, TupleType)), )
-sum = Dispatch ( (lsum, (ListType, TupleType)), )
-cumsum = Dispatch ( (lcumsum, (ListType, TupleType)), )
-ss = Dispatch ( (lss, (ListType, TupleType)), )
-summult = Dispatch ( (lsummult, (ListType, TupleType)), )
-square_of_sums = Dispatch ( (lsquare_of_sums, (ListType, TupleType)), )
-sumdiffsquared = Dispatch ( (lsumdiffsquared, (ListType, TupleType)), )
-shellsort = Dispatch ( (lshellsort, (ListType, TupleType)), )
-rankdata = Dispatch ( (lrankdata, (ListType, TupleType)), )
-findwithin = Dispatch ( (lfindwithin, (ListType, TupleType)), )
+incr = Dispatch ( (lincr, (list, tuple)), )
+sum = Dispatch ( (lsum, (list, tuple)), )
+cumsum = Dispatch ( (lcumsum, (list, tuple)), )
+ss = Dispatch ( (lss, (list, tuple)), )
+summult = Dispatch ( (lsummult, (list, tuple)), )
+square_of_sums = Dispatch ( (lsquare_of_sums, (list, tuple)), )
+sumdiffsquared = Dispatch ( (lsumdiffsquared, (list, tuple)), )
+shellsort = Dispatch ( (lshellsort, (list, tuple)), )
+rankdata = Dispatch ( (lrankdata, (list, tuple)), )
+findwithin = Dispatch ( (lfindwithin, (list, tuple)), )
 
 
 #=============  THE ARRAY-VERSION OF THE STATS FUNCTIONS  ===============
@@ -2044,7 +2044,7 @@ def ageometricmean (inarray,dimension=None,keepdims=0):
         size = len(inarray)
         mult = N.power(inarray,1.0/size)
         mult = N.multiply.reduce(mult)
-    elif type(dimension) in [IntType,FloatType]:
+    elif type(dimension) in [int,float]:
         size = inarray.shape[dimension]
         mult = N.power(inarray,1.0/size)
         mult = N.multiply.reduce(mult,dimension)
@@ -2086,7 +2086,7 @@ def aharmonicmean (inarray,dimension=None,keepdims=0):
         inarray = N.ravel(inarray)
         size = len(inarray)
         s = N.add.reduce(1.0 / inarray)
-    elif type(dimension) in [IntType,FloatType]:
+    elif type(dimension) in [int,float]:
         size = float(inarray.shape[dimension])
         s = N.add.reduce(1.0/inarray, dimension)
         if keepdims == 1:
@@ -2111,7 +2111,7 @@ def aharmonicmean (inarray,dimension=None,keepdims=0):
             idx[0] = -1
             loopcap = N.array(tinarray.shape[0:len(nondims)]) -1
             s = N.zeros(loopcap+1,N.float_)
-            while incr(idx,loopcap) <> -1:
+            while incr(idx,loopcap) != -1:
                 s[idx] = asum(1.0/tinarray[idx])
             size = N.multiply.reduce(N.take(inarray.shape,dims))
             if keepdims == 1:
@@ -2141,7 +2141,7 @@ def amean (inarray,dimension=None,keepdims=0):
         inarray = N.ravel(inarray)
         sum = N.add.reduce(inarray)
         denom = float(len(inarray))
-    elif type(dimension) in [IntType,FloatType]:
+    elif type(dimension) in [int,float]:
         sum = asum(inarray,dimension)
         denom = float(inarray.shape[dimension])
         if keepdims == 1:
@@ -2255,18 +2255,18 @@ def atmean(a,limits=None,inclusive=(1,1)):
         a = a.astype(N.float_)
     if limits == None:
         return mean(a)
-    assert type(limits) in [ListType,TupleType,N.ndarray], "Wrong type for limits in atmean"
+    assert type(limits) in [list,tuple,N.ndarray], "Wrong type for limits in atmean"
     if inclusive[0]:         lowerfcn = N.greater_equal
     else:               lowerfcn = N.greater
     if inclusive[1]:         upperfcn = N.less_equal
     else:               upperfcn = N.less
     if limits[0] > N.maximum.reduce(N.ravel(a)) or limits[1] < N.minimum.reduce(N.ravel(a)):
-        raise ValueError, "No array values within given limits (atmean)."
-    elif limits[0]==None and limits[1]<>None:
+        raise ValueError("No array values within given limits (atmean).")
+    elif limits[0]==None and limits[1]!=None:
         mask = upperfcn(a,limits[1])
-    elif limits[0]<>None and limits[1]==None:
+    elif limits[0]!=None and limits[1]==None:
         mask = lowerfcn(a,limits[0])
-    elif limits[0]<>None and limits[1]<>None:
+    elif limits[0]!=None and limits[1]!=None:
         mask = lowerfcn(a,limits[0])*upperfcn(a,limits[1])
     s = float(N.add.reduce(N.ravel(a*mask)))
     n = float(N.add.reduce(N.ravel(mask)))
@@ -2287,18 +2287,18 @@ def atvar(a,limits=None,inclusive=(1,1)):
     a = a.astype(N.float_)
     if limits == None or limits == [None,None]:
         return avar(a)
-    assert type(limits) in [ListType,TupleType,N.ndarray], "Wrong type for limits in atvar"
+    assert type(limits) in [list,tuple,N.ndarray], "Wrong type for limits in atvar"
     if inclusive[0]:    lowerfcn = N.greater_equal
     else:               lowerfcn = N.greater
     if inclusive[1]:    upperfcn = N.less_equal
     else:               upperfcn = N.less
     if limits[0] > N.maximum.reduce(N.ravel(a)) or limits[1] < N.minimum.reduce(N.ravel(a)):
-        raise ValueError, "No array values within given limits (atvar)."
-    elif limits[0]==None and limits[1]<>None:
+        raise ValueError("No array values within given limits (atvar).")
+    elif limits[0]==None and limits[1]!=None:
         mask = upperfcn(a,limits[1])
-    elif limits[0]<>None and limits[1]==None:
+    elif limits[0]!=None and limits[1]==None:
         mask = lowerfcn(a,limits[0])
-    elif limits[0]<>None and limits[1]<>None:
+    elif limits[0]!=None and limits[1]!=None:
         mask = lowerfcn(a,limits[0])*upperfcn(a,limits[1])
 
     a = N.compress(mask,a)  # squish out excluded values
@@ -2373,18 +2373,18 @@ def atsem(a,limits=None,inclusive=(1,1)):
     if limits == None or limits == [None,None]:
         n = float(len(N.ravel(a)))
         limits = [min(a)-1, max(a)+1]
-    assert type(limits) in [ListType,TupleType,N.ndarray], "Wrong type for limits in atsem"
+    assert type(limits) in [list,tuple,N.ndarray], "Wrong type for limits in atsem"
     if inclusive[0]:         lowerfcn = N.greater_equal
     else:               lowerfcn = N.greater
     if inclusive[1]:         upperfcn = N.less_equal
     else:               upperfcn = N.less
     if limits[0] > N.maximum.reduce(N.ravel(a)) or limits[1] < N.minimum.reduce(N.ravel(a)):
-        raise ValueError, "No array values within given limits (atsem)."
-    elif limits[0]==None and limits[1]<>None:
+        raise ValueError("No array values within given limits (atsem).")
+    elif limits[0]==None and limits[1]!=None:
         mask = upperfcn(a,limits[1])
-    elif limits[0]<>None and limits[1]==None:
+    elif limits[0]!=None and limits[1]==None:
         mask = lowerfcn(a,limits[0])
-    elif limits[0]<>None and limits[1]<>None:
+    elif limits[0]!=None and limits[1]!=None:
         mask = lowerfcn(a,limits[0])*upperfcn(a,limits[1])
     term1 = N.add.reduce(N.ravel(a*a*mask))
     n = float(N.add.reduce(N.ravel(mask)))
@@ -2441,8 +2441,8 @@ def askew(a,dimension=None):
     """
     denom = N.power(amoment(a,2,dimension),1.5)
     zero = N.equal(denom,0)
-    if type(denom) == N.ndarray and asum(zero) <> 0:
-        print "Number of zeros in askew: ",asum(zero)
+    if type(denom) == N.ndarray and asum(zero) != 0:
+        print("Number of zeros in askew: ",asum(zero))
     denom = denom + zero  # prevent divide-by-zero
     return N.where(zero, 0, amoment(a,3,dimension)/denom)
 
@@ -2460,8 +2460,8 @@ def akurtosis(a,dimension=None):
     """
     denom = N.power(amoment(a,2,dimension),2)
     zero = N.equal(denom,0)
-    if type(denom) == N.ndarray and asum(zero) <> 0:
-        print "Number of zeros in akurtosis: ",asum(zero)
+    if type(denom) == N.ndarray and asum(zero) != 0:
+        print("Number of zeros in akurtosis: ",asum(zero))
     denom = denom + zero  # prevent divide-by-zero
     return N.where(zero,0,amoment(a,4,dimension)/denom)
 
@@ -2531,7 +2531,7 @@ def akurtosistest(a,dimension=None):
         dimension = 0
     n = float(a.shape[dimension])
     if n<20:
-        print "akurtosistest only valid for n>=20 ... continuing anyway, n=",n
+        print("akurtosistest only valid for n>=20 ... continuing anyway, n=",n)
     b2 = akurtosis(a,dimension)
     E = 3.0*(n-1) /(n+1)
     varb2 = 24.0*n*(n-2)*(n-3) / ((n+1)*(n+1)*(n+3)*(n+5))
@@ -2631,7 +2631,7 @@ def ahistogram (inarray,numbins=10,defaultlimits=None,printextras=1):
     Returns: (array of bin counts, bin-minimum, min-width, #-points-outside-range)
     """
     inarray = N.ravel(inarray)               # flatten any >1D arrays
-    if (defaultlimits <> None):
+    if (defaultlimits != None):
         lowerreallimit = defaultlimits[0]
         upperreallimit = defaultlimits[1]
         binsize = (upperreallimit-lowerreallimit) / float(numbins)
@@ -2653,7 +2653,7 @@ def ahistogram (inarray,numbins=10,defaultlimits=None,printextras=1):
         except:                           # point outside lower/upper limits
             extrapoints = extrapoints + 1
     if (extrapoints > 0 and printextras == 1):
-        print '\nPoints outside given histogram range =',extrapoints
+        print('\nPoints outside given histogram range =',extrapoints)
     return (bins, lowerreallimit, binsize, extrapoints)
 
 
@@ -2721,8 +2721,8 @@ def aobrientransform(*args):
     for j in range(k):
         if v[j] - mean(nargs[j]) > TINY:
             check = 0
-    if check <> 1:
-        raise ValueError, 'Lack of convergence in obrientransform.'
+    if check != 1:
+        raise ValueError('Lack of convergence in obrientransform.')
     else:
         return N.array(nargs)
 
@@ -2745,7 +2745,7 @@ def asamplevar (inarray,dimension=None,keepdims=0):
     else:
         mn = amean(inarray,dimension,keepdims=1)
     deviations = inarray - mn 
-    if type(dimension) == ListType:
+    if type(dimension) == list:
         n = 1
         for d in dimension:
             n = n*inarray.shape[d]
@@ -2800,7 +2800,7 @@ def acov (x,y, dimension=None,keepdims=0):
     xdeviations = x - xmn
     ymn = amean(y,dimension,1)  # keepdims
     ydeviations = y - ymn
-    if type(dimension) == ListType:
+    if type(dimension) == list:
         n = 1
         for d in dimension:
             n = n*x.shape[d]
@@ -2825,7 +2825,7 @@ def avar (inarray, dimension=None,keepdims=0):
         dimension = 0
     mn = amean(inarray,dimension,1)
     deviations = inarray - mn
-    if type(dimension) == ListType:
+    if type(dimension) == list:
         n = 1
         for d in dimension:
             n = n*inarray.shape[d]
@@ -2877,7 +2877,7 @@ def asem (inarray, dimension=None, keepdims=0):
     if dimension == None:
         inarray = N.ravel(inarray)
         dimension = 0
-    if type(dimension) == ListType:
+    if type(dimension) == list:
         n = 1
         for d in dimension:
             n = n*inarray.shape[d]
@@ -2940,9 +2940,9 @@ def athreshold(a,threshmin=None,threshmax=None,newval=0):
     Returns: a, with values <threshmin or >threshmax replaced with newval
     """
     mask = N.zeros(a.shape)
-    if threshmin <> None:
+    if threshmin != None:
         mask = mask + N.where(a<threshmin,1,0)
-    if threshmax <> None:
+    if threshmax != None:
         mask = mask + N.where(a>threshmax,1,0)
     mask = N.clip(mask,0,1)
     return N.where(mask,newval,a)
@@ -2995,8 +2995,8 @@ def acovariance(X):
     Usage:   acovariance(X)
     Returns: covariance matrix of X
     """
-    if len(X.shape) <> 2:
-        raise TypeError, "acovariance requires 2D matrices"
+    if len(X.shape) != 2:
+        raise TypeError("acovariance requires 2D matrices")
     n = X.shape[0]
     mX = amean(X,0)
     return N.dot(N.transpose(X),X) / float(n) - N.multiply.outer(mX,mX)
@@ -3024,11 +3024,11 @@ def apaired(x,y):
     """
     samples = ''
     while samples not in ['i','r','I','R','c','C']:
-        print '\nIndependent or related samples, or correlation (i,r,c): ',
-        samples = raw_input()
+        print('\nIndependent or related samples, or correlation (i,r,c): ', end=' ')
+        samples = input()
 
     if samples in ['i','I','r','R']:
-        print '\nComparing variances ...',
+        print('\nComparing variances ...', end=' ')
         # USE O'BRIEN'S TEST FOR HOMOGENEITY OF VARIANCE, Maxwell & delaney, p.112
         r = obrientransform(x,y)
         f,p = F_oneway(pstat.colex(r,0),pstat.colex(r,1))
@@ -3036,45 +3036,45 @@ def apaired(x,y):
             vartype='unequal, p='+str(round(p,4))
         else:
             vartype='equal'
-        print vartype
+        print(vartype)
         if samples in ['i','I']:
             if vartype[0]=='e':
                 t,p = ttest_ind(x,y,None,0)
-                print '\nIndependent samples t-test:  ', round(t,4),round(p,4)
+                print('\nIndependent samples t-test:  ', round(t,4),round(p,4))
             else:
                 if len(x)>20 or len(y)>20:
                     z,p = ranksums(x,y)
-                    print '\nRank Sums test (NONparametric, n>20):  ', round(z,4),round(p,4)
+                    print('\nRank Sums test (NONparametric, n>20):  ', round(z,4),round(p,4))
                 else:
                     u,p = mannwhitneyu(x,y)
-                    print '\nMann-Whitney U-test (NONparametric, ns<20):  ', round(u,4),round(p,4)
+                    print('\nMann-Whitney U-test (NONparametric, ns<20):  ', round(u,4),round(p,4))
 
         else:  # RELATED SAMPLES
             if vartype[0]=='e':
                 t,p = ttest_rel(x,y,0)
-                print '\nRelated samples t-test:  ', round(t,4),round(p,4)
+                print('\nRelated samples t-test:  ', round(t,4),round(p,4))
             else:
                 t,p = ranksums(x,y)
-                print '\nWilcoxon T-test (NONparametric):  ', round(t,4),round(p,4)
+                print('\nWilcoxon T-test (NONparametric):  ', round(t,4),round(p,4))
     else:  # CORRELATION ANALYSIS
         corrtype = ''
         while corrtype not in ['c','C','r','R','d','D']:
-            print '\nIs the data Continuous, Ranked, or Dichotomous (c,r,d): ',
-            corrtype = raw_input()
+            print('\nIs the data Continuous, Ranked, or Dichotomous (c,r,d): ', end=' ')
+            corrtype = input()
         if corrtype in ['c','C']:
             m,b,r,p,see = linregress(x,y)
-            print '\nLinear regression for continuous variables ...'
+            print('\nLinear regression for continuous variables ...')
             lol = [['Slope','Intercept','r','Prob','SEestimate'],[round(m,4),round(b,4),round(r,4),round(p,4),round(see,4)]]
             pstat.printcc(lol)
         elif corrtype in ['r','R']:
             r,p = spearmanr(x,y)
-            print '\nCorrelation for ranked variables ...'
-            print "Spearman's r: ",round(r,4),round(p,4)
+            print('\nCorrelation for ranked variables ...')
+            print("Spearman's r: ",round(r,4),round(p,4))
         else: # DICHOTOMOUS
             r,p = pointbiserialr(x,y)
-            print '\nAssuming x contains a dichotomous variable ...'
-            print 'Point Biserial r: ',round(r,4),round(p,4)
-    print '\n\n'
+            print('\nAssuming x contains a dichotomous variable ...')
+            print('Point Biserial r: ',round(r,4),round(p,4))
+    print('\n\n')
     return None
 
 
@@ -3192,8 +3192,8 @@ def apointbiserialr(x,y):
     TINY = 1e-30
     categories = pstat.aunique(x)
     data = pstat.aabut(x,y)
-    if len(categories) <> 2:
-        raise ValueError, "Exactly 2 categories required (in x) for pointbiserialr()."
+    if len(categories) != 2:
+        raise ValueError("Exactly 2 categories required (in x) for pointbiserialr().")
     else:   # there are 2 categories, continue
         codemap = pstat.aabut(categories,N.arange(2))
         recoded = pstat.arecode(data,codemap,0)
@@ -3307,7 +3307,7 @@ def amasslinregress(*args):
     shp = N.ones(len(y.shape))
     shp[0] = len(x)
     x.shape = shp
-    print x.shape, y.shape
+    print(x.shape, y.shape)
     r_num = n*(N.add.reduce(x*y,0)) - N.add.reduce(x)*N.add.reduce(y,0)
     r_den = N.sqrt((n*ass(x) - asquare_of_sums(x))*(n*ass(y,0)-asquare_of_sums(y,0)))
     zerodivproblem = N.equal(r_den,0)
@@ -3350,7 +3350,7 @@ def attest_1samp(a,popmean,printit=0,name='Sample',writemode='a'):
     t = (x-popmean)/math.sqrt(svar*(1.0/n))
     prob = abetai(0.5*df,0.5,df/(df+t*t))
 
-    if printit <> 0:
+    if printit != 0:
         statname = 'Single-sample T-test.'
         outputpairedstats(printit,writemode,
                           'Population','--',popmean,0,0,0,
@@ -3395,7 +3395,7 @@ def attest_ind (a, b, dimension=None, printit=0, name1='Samp1', name2='Samp2',wr
     if probs.shape == (1,):
         probs = probs[0]
         
-    if printit <> 0:
+    if printit != 0:
         if type(t) == N.ndarray:
             t = t[0]
         if type(probs) == N.ndarray:
@@ -3425,15 +3425,15 @@ def ap2t(pval,df):
     pval = abs(pval)
     t = N.ones(pval.shape,N.float_)*50
     step = N.ones(pval.shape,N.float_)*25
-    print "Initial ap2t() prob calc"
+    print("Initial ap2t() prob calc")
     prob = abetai(0.5*df,0.5,float(df)/(df+t*t))
-    print 'ap2t() iter: ',
+    print('ap2t() iter: ', end=' ')
     for i in range(10):
-        print i,' ',
+        print(i,' ', end=' ')
         t = N.where(pval<prob,t+step,t-step)
         prob = abetai(0.5*df,0.5,float(df)/(df+t*t))
         step = step/2
-    print
+    print()
     # since this is an ugly hack, we get ugly boundaries
     t = N.where(t>99.9,1000,t)      # hit upper-boundary
     t = t+signs
@@ -3456,8 +3456,8 @@ def attest_rel (a,b,dimension=None,printit=0,name1='Samp1',name2='Samp2',writemo
         a = N.ravel(a)
         b = N.ravel(b)
         dimension = 0
-    if len(a)<>len(b):
-        raise ValueError, 'Unequal length arrays.'
+    if len(a)!=len(b):
+        raise ValueError('Unequal length arrays.')
     x1 = amean(a,dimension)
     x2 = amean(b,dimension)
     v1 = avar(a,dimension)
@@ -3477,7 +3477,7 @@ def attest_rel (a,b,dimension=None,printit=0,name1='Samp1',name2='Samp2',writemo
     if probs.shape == (1,):
         probs = probs[0]
 
-    if printit <> 0:
+    if printit != 0:
         statname = 'Related samples T-test.'
         outputpairedstats(printit,writemode,
                           name1,n,x1,v1,N.minimum.reduce(N.ravel(a)),
@@ -3569,7 +3569,7 @@ def amannwhitneyu(x,y):
     smallu = min(u1,u2)
     T = math.sqrt(tiecorrect(ranked))  # correction factor for tied scores
     if T == 0:
-        raise ValueError, 'All numbers are identical in amannwhitneyu'
+        raise ValueError('All numbers are identical in amannwhitneyu')
     sd = math.sqrt(T*n1*n2*(n1+n2+1)/12.0)
     z = abs((bigu-n1*n2/2.0) / sd)  # normal approximation for prob calc
     return smallu, 1.0 - azprob(z)
@@ -3630,8 +3630,8 @@ def awilcoxont(x,y):
     Usage:   awilcoxont(x,y)     where x,y are equal-length arrays for 2 conditions
     Returns: t-statistic, two-tailed p-value
     """
-    if len(x) <> len(y):
-        raise ValueError, 'Unequal N in awilcoxont.  Aborting.'
+    if len(x) != len(y):
+        raise ValueError('Unequal N in awilcoxont.  Aborting.')
     d = x-y
     d = N.compress(N.not_equal(d,0),d) # Keep all non-zero differences
     count = len(d)
@@ -3666,7 +3666,7 @@ def akruskalwallish(*args):
     assert len(args) == 3, "Need at least 3 groups in stats.akruskalwallish()"
     args = list(args)
     n = [0]*len(args)
-    n = map(len,args)
+    n = list(map(len,args))
     all = []
     for i in range(len(args)):
         all = all + args[i].tolist()
@@ -3684,7 +3684,7 @@ def akruskalwallish(*args):
     h = 12.0 / (totaln*(totaln+1)) * ssbn - 3*(totaln+1)
     df = len(args) - 1
     if T == 0:
-        raise ValueError, 'All numbers are identical in akruskalwallish'
+        raise ValueError('All numbers are identical in akruskalwallish')
     h = h / float(T)
     return h, chisqprob(h,df)
 
@@ -3703,9 +3703,9 @@ def afriedmanchisquare(*args):
     """
     k = len(args)
     if k < 3:
-        raise ValueError, '\nLess than 3 levels.  Friedman test not appropriate.\n'
+        raise ValueError('\nLess than 3 levels.  Friedman test not appropriate.\n')
     n = len(args[0])
-    data = apply(pstat.aabut,args)
+    data = pstat.aabut(*args)
     data = data.astype(N.float_)
     for i in range(len(data)):
         data[i] = arankdata(data[i])
@@ -3766,7 +3766,7 @@ def achisqprob(chisq,df):
         a_big = N.greater(a,BIG)
         a_big_frozen = -1 *N.ones(probs.shape,N.float_)
         totalelements = N.multiply.reduce(N.array(probs.shape))
-        while asum(mask)<>totalelements:
+        while asum(mask)!=totalelements:
             e = N.log(z) + e
             s = s + ex(c*z-a-e)
             z = z + 1.0
@@ -3783,7 +3783,7 @@ def achisqprob(chisq,df):
         c = 0.0
         mask = N.zeros(probs.shape)
         a_notbig_frozen = -1 *N.ones(probs.shape,N.float_)
-        while asum(mask)<>totalelements:
+        while asum(mask)!=totalelements:
             e = e * (a/z.astype(N.float_))
             c = c + e
             z = z + 1.0
@@ -3952,8 +3952,8 @@ def abetacf(a,b,x,verbose=1):
         frozen = N.where(newmask*N.equal(mask,0), az, frozen)
         mask = N.clip(mask+newmask,0,1)
     noconverge = asum(N.equal(frozen,-1))
-    if noconverge <> 0 and verbose:
-        print 'a or b too big, or ITMAX too small in Betacf for ',noconverge,' elements'
+    if noconverge != 0 and verbose:
+        print('a or b too big, or ITMAX too small in Betacf for ',noconverge,' elements')
     if arrayflag:
         return frozen
     else:
@@ -3997,8 +3997,8 @@ def abetai(a,b,x,verbose=1):
     """
     TINY = 1e-15
     if type(a) == N.ndarray:
-        if asum(N.less(x,0)+N.greater(x,1)) <> 0:
-            raise ValueError, 'Bad x in abetai'
+        if asum(N.less(x,0)+N.greater(x,1)) != 0:
+            raise ValueError('Bad x in abetai')
     x = N.where(N.equal(x,0),TINY,x)
     x = N.where(N.equal(x,1.0),1-TINY,x)
 
@@ -4035,8 +4035,8 @@ def aglm(data,para):
     Usage:   aglm(data,para)
     Returns: statistic, p-value ???
     """
-    if len(para) <> len(data):
-        print "data and para must be same length in aglm"
+    if len(para) != len(data):
+        print("data and para must be same length in aglm")
         return
     n = len(para)
     p = pstat.aunique(para)
@@ -4071,10 +4071,10 @@ def aF_oneway(*args):
     vars = [0]*na
     ns = [0]*na
     alldata = []
-    tmp = map(N.array,args)
-    means = map(amean,tmp)
-    vars = map(avar,tmp)
-    ns = map(len,args)
+    tmp = list(map(N.array,args))
+    means = list(map(amean,tmp))
+    vars = list(map(avar,tmp))
+    ns = list(map(len,args))
     alldata = N.concatenate(args)
     bign = len(alldata)
     sstot = ass(alldata)-(asquare_of_sums(alldata)/float(bign))
@@ -4129,9 +4129,9 @@ def F_value_multivariate(ER, EF, dfnum, dfden):
     dfF = degrees of freedom associated with the Restricted model
     where ER and EF are matrices from a multivariate F calculation.
     """
-    if type(ER) in [IntType, FloatType]:
+    if type(ER) in [int, float]:
         ER = N.array([[ER]])
-    if type(EF) in [IntType, FloatType]:
+    if type(EF) in [int, float]:
         EF = N.array([[EF]])
     n_um = (LA.det(ER) - LA.det(EF)) / float(dfnum)
     d_en = LA.det(EF) / float(dfden)
@@ -4170,7 +4170,7 @@ def asum (a, dimension=None,keepdims=0):
         a = a.astype(N.float_)
     if dimension == None:
         s = N.sum(N.ravel(a))
-    elif type(dimension) in [IntType,FloatType]:
+    elif type(dimension) in [int,float]:
         s = N.add.reduce(a, dimension)
         if keepdims == 1:
             shp = list(a.shape)
@@ -4203,7 +4203,7 @@ def acumsum (a,dimension=None):
     if dimension == None:
         a = N.ravel(a)
         dimension = 0
-    if type(dimension) in [ListType, TupleType, N.ndarray]:
+    if type(dimension) in [list, tuple, N.ndarray]:
         dimension = list(dimension)
         dimension.sort()
         dimension.reverse()
@@ -4296,7 +4296,7 @@ def ashellsort(inarray):
     """
     n = len(inarray)
     svec = inarray *1.0
-    ivec = range(n)
+    ivec = list(range(n))
     gap = n/2   # integer division needed
     while gap >0:
         for i in range(gap,n):
@@ -4329,7 +4329,7 @@ def arankdata(inarray):
     for i in range(n):
         sumranks = sumranks + i
         dupcount = dupcount + 1
-        if i==n-1 or svec[i] <> svec[i+1]:
+        if i==n-1 or svec[i] != svec[i+1]:
             averank = sumranks / float(dupcount) + 1
             for j in range(i-dupcount+1,i+1):
                 newarray[ivec[j]] = averank
@@ -4367,17 +4367,17 @@ try:
     #########################################################
    
     ## CENTRAL TENDENCY:
-    geometricmean = Dispatch ( (lgeometricmean, (ListType, TupleType)),
+    geometricmean = Dispatch ( (lgeometricmean, (list, tuple)),
                                (ageometricmean, (N.ndarray,)) )
-    harmonicmean = Dispatch ( (lharmonicmean, (ListType, TupleType)),
+    harmonicmean = Dispatch ( (lharmonicmean, (list, tuple)),
                               (aharmonicmean, (N.ndarray,)) )
-    mean = Dispatch ( (lmean, (ListType, TupleType)),
+    mean = Dispatch ( (lmean, (list, tuple)),
                       (amean, (N.ndarray,)) )
-    median = Dispatch ( (lmedian, (ListType, TupleType)),
+    median = Dispatch ( (lmedian, (list, tuple)),
                         (amedian, (N.ndarray,)) )
-    medianscore = Dispatch ( (lmedianscore, (ListType, TupleType)),
+    medianscore = Dispatch ( (lmedianscore, (list, tuple)),
                              (amedianscore, (N.ndarray,)) )
-    mode = Dispatch ( (lmode, (ListType, TupleType)),
+    mode = Dispatch ( (lmode, (list, tuple)),
                       (amode, (N.ndarray,)) )
     tmean = Dispatch ( (atmean, (N.ndarray,)) )
     tvar = Dispatch ( (atvar, (N.ndarray,)) )
@@ -4385,157 +4385,157 @@ try:
     tsem = Dispatch ( (atsem, (N.ndarray,)) )
    
     ## VARIATION:
-    moment = Dispatch ( (lmoment, (ListType, TupleType)),
+    moment = Dispatch ( (lmoment, (list, tuple)),
                         (amoment, (N.ndarray,)) )
-    variation = Dispatch ( (lvariation, (ListType, TupleType)),
+    variation = Dispatch ( (lvariation, (list, tuple)),
                            (avariation, (N.ndarray,)) )
-    skew = Dispatch ( (lskew, (ListType, TupleType)),
+    skew = Dispatch ( (lskew, (list, tuple)),
                       (askew, (N.ndarray,)) )
-    kurtosis = Dispatch ( (lkurtosis, (ListType, TupleType)),
+    kurtosis = Dispatch ( (lkurtosis, (list, tuple)),
                           (akurtosis, (N.ndarray,)) )
-    describe = Dispatch ( (ldescribe, (ListType, TupleType)),
+    describe = Dispatch ( (ldescribe, (list, tuple)),
                           (adescribe, (N.ndarray,)) )
    
     ## DISTRIBUTION TESTS
 
-    skewtest = Dispatch ( (askewtest, (ListType, TupleType)),
+    skewtest = Dispatch ( (askewtest, (list, tuple)),
                           (askewtest, (N.ndarray,)) )
-    kurtosistest = Dispatch ( (akurtosistest, (ListType, TupleType)),
+    kurtosistest = Dispatch ( (akurtosistest, (list, tuple)),
                               (akurtosistest, (N.ndarray,)) )
-    normaltest = Dispatch ( (anormaltest, (ListType, TupleType)),
+    normaltest = Dispatch ( (anormaltest, (list, tuple)),
                             (anormaltest, (N.ndarray,)) )
    
     ## FREQUENCY STATS:
-    itemfreq = Dispatch ( (litemfreq, (ListType, TupleType)),
+    itemfreq = Dispatch ( (litemfreq, (list, tuple)),
                           (aitemfreq, (N.ndarray,)) )
-    scoreatpercentile = Dispatch ( (lscoreatpercentile, (ListType, TupleType)),
+    scoreatpercentile = Dispatch ( (lscoreatpercentile, (list, tuple)),
                                    (ascoreatpercentile, (N.ndarray,)) )
-    percentileofscore = Dispatch ( (lpercentileofscore, (ListType, TupleType)),
+    percentileofscore = Dispatch ( (lpercentileofscore, (list, tuple)),
                                     (apercentileofscore, (N.ndarray,)) )
-    histogram = Dispatch ( (lhistogram, (ListType, TupleType)),
+    histogram = Dispatch ( (lhistogram, (list, tuple)),
                            (ahistogram, (N.ndarray,)) )
-    cumfreq = Dispatch ( (lcumfreq, (ListType, TupleType)),
+    cumfreq = Dispatch ( (lcumfreq, (list, tuple)),
                          (acumfreq, (N.ndarray,)) )
-    relfreq = Dispatch ( (lrelfreq, (ListType, TupleType)),
+    relfreq = Dispatch ( (lrelfreq, (list, tuple)),
                          (arelfreq, (N.ndarray,)) )
     
     ## VARIABILITY:
-    obrientransform = Dispatch ( (lobrientransform, (ListType, TupleType)),
+    obrientransform = Dispatch ( (lobrientransform, (list, tuple)),
                                  (aobrientransform, (N.ndarray,)) )
-    samplevar = Dispatch ( (lsamplevar, (ListType, TupleType)),
+    samplevar = Dispatch ( (lsamplevar, (list, tuple)),
                            (asamplevar, (N.ndarray,)) )
-    samplestdev = Dispatch ( (lsamplestdev, (ListType, TupleType)),
+    samplestdev = Dispatch ( (lsamplestdev, (list, tuple)),
                              (asamplestdev, (N.ndarray,)) )
     signaltonoise = Dispatch( (asignaltonoise, (N.ndarray,)),)
-    var = Dispatch ( (lvar, (ListType, TupleType)),
+    var = Dispatch ( (lvar, (list, tuple)),
                      (avar, (N.ndarray,)) )
-    stdev = Dispatch ( (lstdev, (ListType, TupleType)),
+    stdev = Dispatch ( (lstdev, (list, tuple)),
                        (astdev, (N.ndarray,)) )
-    sterr = Dispatch ( (lsterr, (ListType, TupleType)),
+    sterr = Dispatch ( (lsterr, (list, tuple)),
                        (asterr, (N.ndarray,)) )
-    sem = Dispatch ( (lsem, (ListType, TupleType)),
+    sem = Dispatch ( (lsem, (list, tuple)),
                      (asem, (N.ndarray,)) )
-    z = Dispatch ( (lz, (ListType, TupleType)),
+    z = Dispatch ( (lz, (list, tuple)),
                    (az, (N.ndarray,)) )
-    zs = Dispatch ( (lzs, (ListType, TupleType)),
+    zs = Dispatch ( (lzs, (list, tuple)),
                     (azs, (N.ndarray,)) )
     
     ## TRIMMING FCNS:
     threshold = Dispatch( (athreshold, (N.ndarray,)),)
-    trimboth = Dispatch ( (ltrimboth, (ListType, TupleType)),
+    trimboth = Dispatch ( (ltrimboth, (list, tuple)),
                           (atrimboth, (N.ndarray,)) )
-    trim1 = Dispatch ( (ltrim1, (ListType, TupleType)),
+    trim1 = Dispatch ( (ltrim1, (list, tuple)),
                        (atrim1, (N.ndarray,)) )
     
     ## CORRELATION FCNS:
-    paired = Dispatch ( (lpaired, (ListType, TupleType)),
+    paired = Dispatch ( (lpaired, (list, tuple)),
                         (apaired, (N.ndarray,)) )
-    lincc = Dispatch ( (llincc, (ListType, TupleType)),
+    lincc = Dispatch ( (llincc, (list, tuple)),
                           (alincc, (N.ndarray,)) )
-    pearsonr = Dispatch ( (lpearsonr, (ListType, TupleType)),
+    pearsonr = Dispatch ( (lpearsonr, (list, tuple)),
                           (apearsonr, (N.ndarray,)) )
-    spearmanr = Dispatch ( (lspearmanr, (ListType, TupleType)),
+    spearmanr = Dispatch ( (lspearmanr, (list, tuple)),
                            (aspearmanr, (N.ndarray,)) )
-    pointbiserialr = Dispatch ( (lpointbiserialr, (ListType, TupleType)),
+    pointbiserialr = Dispatch ( (lpointbiserialr, (list, tuple)),
                                 (apointbiserialr, (N.ndarray,)) )
-    kendalltau = Dispatch ( (lkendalltau, (ListType, TupleType)),
+    kendalltau = Dispatch ( (lkendalltau, (list, tuple)),
                             (akendalltau, (N.ndarray,)) )
-    linregress = Dispatch ( (llinregress, (ListType, TupleType)),
+    linregress = Dispatch ( (llinregress, (list, tuple)),
                             (alinregress, (N.ndarray,)) )
     
     ## INFERENTIAL STATS:
-    ttest_1samp = Dispatch ( (lttest_1samp, (ListType, TupleType)),
+    ttest_1samp = Dispatch ( (lttest_1samp, (list, tuple)),
                              (attest_1samp, (N.ndarray,)) )
-    ttest_ind = Dispatch ( (lttest_ind, (ListType, TupleType)),
+    ttest_ind = Dispatch ( (lttest_ind, (list, tuple)),
                            (attest_ind, (N.ndarray,)) )
-    ttest_rel = Dispatch ( (lttest_rel, (ListType, TupleType)),
+    ttest_rel = Dispatch ( (lttest_rel, (list, tuple)),
                            (attest_rel, (N.ndarray,)) )
-    chisquare = Dispatch ( (lchisquare, (ListType, TupleType)),
+    chisquare = Dispatch ( (lchisquare, (list, tuple)),
                            (achisquare, (N.ndarray,)) )
-    ks_2samp = Dispatch ( (lks_2samp, (ListType, TupleType)),
+    ks_2samp = Dispatch ( (lks_2samp, (list, tuple)),
                           (aks_2samp, (N.ndarray,)) )
-    mannwhitneyu = Dispatch ( (lmannwhitneyu, (ListType, TupleType)),
+    mannwhitneyu = Dispatch ( (lmannwhitneyu, (list, tuple)),
                               (amannwhitneyu, (N.ndarray,)) )
-    tiecorrect = Dispatch ( (ltiecorrect, (ListType, TupleType)),
+    tiecorrect = Dispatch ( (ltiecorrect, (list, tuple)),
                             (atiecorrect, (N.ndarray,)) )
-    ranksums = Dispatch ( (lranksums, (ListType, TupleType)),
+    ranksums = Dispatch ( (lranksums, (list, tuple)),
                           (aranksums, (N.ndarray,)) )
-    wilcoxont = Dispatch ( (lwilcoxont, (ListType, TupleType)),
+    wilcoxont = Dispatch ( (lwilcoxont, (list, tuple)),
                            (awilcoxont, (N.ndarray,)) )
-    kruskalwallish = Dispatch ( (lkruskalwallish, (ListType, TupleType)),
+    kruskalwallish = Dispatch ( (lkruskalwallish, (list, tuple)),
                                 (akruskalwallish, (N.ndarray,)) )
-    friedmanchisquare = Dispatch ( (lfriedmanchisquare, (ListType, TupleType)),
+    friedmanchisquare = Dispatch ( (lfriedmanchisquare, (list, tuple)),
                                    (afriedmanchisquare, (N.ndarray,)) )
     
     ## PROBABILITY CALCS:
-    chisqprob = Dispatch ( (lchisqprob, (IntType, FloatType)),
+    chisqprob = Dispatch ( (lchisqprob, (int, float)),
                            (achisqprob, (N.ndarray,)) )
-    zprob = Dispatch ( (lzprob, (IntType, FloatType)),
+    zprob = Dispatch ( (lzprob, (int, float)),
                        (azprob, (N.ndarray,)) )
-    ksprob = Dispatch ( (lksprob, (IntType, FloatType)),
+    ksprob = Dispatch ( (lksprob, (int, float)),
                         (aksprob, (N.ndarray,)) )
-    fprob = Dispatch ( (lfprob, (IntType, FloatType)),
+    fprob = Dispatch ( (lfprob, (int, float)),
                        (afprob, (N.ndarray,)) )
-    betacf = Dispatch ( (lbetacf, (IntType, FloatType)),
+    betacf = Dispatch ( (lbetacf, (int, float)),
                         (abetacf, (N.ndarray,)) )
-    betai = Dispatch ( (lbetai, (IntType, FloatType)),
+    betai = Dispatch ( (lbetai, (int, float)),
                        (abetai, (N.ndarray,)) )
-    erfcc = Dispatch ( (lerfcc, (IntType, FloatType)),
+    erfcc = Dispatch ( (lerfcc, (int, float)),
                        (aerfcc, (N.ndarray,)) )
-    gammln = Dispatch ( (lgammln, (IntType, FloatType)),
+    gammln = Dispatch ( (lgammln, (int, float)),
                         (agammln, (N.ndarray,)) )
     
     ## ANOVA FUNCTIONS:
-    F_oneway = Dispatch ( (lF_oneway, (ListType, TupleType)),
+    F_oneway = Dispatch ( (lF_oneway, (list, tuple)),
                           (aF_oneway, (N.ndarray,)) )
-    F_value = Dispatch ( (lF_value, (ListType, TupleType)),
+    F_value = Dispatch ( (lF_value, (list, tuple)),
                          (aF_value, (N.ndarray,)) )
    
     ## SUPPORT FUNCTIONS:
-    incr = Dispatch ( (lincr, (ListType, TupleType, N.ndarray)), )
-    sum = Dispatch ( (lsum, (ListType, TupleType)),
+    incr = Dispatch ( (lincr, (list, tuple, N.ndarray)), )
+    sum = Dispatch ( (lsum, (list, tuple)),
                      (asum, (N.ndarray,)) )
-    cumsum = Dispatch ( (lcumsum, (ListType, TupleType)),
+    cumsum = Dispatch ( (lcumsum, (list, tuple)),
                         (acumsum, (N.ndarray,)) )
-    ss = Dispatch ( (lss, (ListType, TupleType)),
+    ss = Dispatch ( (lss, (list, tuple)),
                     (ass, (N.ndarray,)) )
-    summult = Dispatch ( (lsummult, (ListType, TupleType)),
+    summult = Dispatch ( (lsummult, (list, tuple)),
                          (asummult, (N.ndarray,)) )
-    square_of_sums = Dispatch ( (lsquare_of_sums, (ListType, TupleType)),
+    square_of_sums = Dispatch ( (lsquare_of_sums, (list, tuple)),
                                 (asquare_of_sums, (N.ndarray,)) )
-    sumdiffsquared = Dispatch ( (lsumdiffsquared, (ListType, TupleType)),
+    sumdiffsquared = Dispatch ( (lsumdiffsquared, (list, tuple)),
                                 (asumdiffsquared, (N.ndarray,)) )
-    shellsort = Dispatch ( (lshellsort, (ListType, TupleType)),
+    shellsort = Dispatch ( (lshellsort, (list, tuple)),
                            (ashellsort, (N.ndarray,)) )
-    rankdata = Dispatch ( (lrankdata, (ListType, TupleType)),
+    rankdata = Dispatch ( (lrankdata, (list, tuple)),
                           (arankdata, (N.ndarray,)) )
-    findwithin = Dispatch ( (lfindwithin, (ListType, TupleType)),
+    findwithin = Dispatch ( (lfindwithin, (list, tuple)),
                             (afindwithin, (N.ndarray,)) )
    
 ######################  END OF NUMERIC FUNCTION BLOCK  #####################
 
 ######################  END OF STATISTICAL FUNCTIONS  ######################
 
-except ImportError, exc:
+except ImportError as exc:
     #print exc
     pass

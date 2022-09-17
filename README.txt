@@ -2,6 +2,10 @@
 
 python setup.py install 
 
+= To dev Install
+
+pip install -e .
+
 = About the Statlib Package =
 
 *A collection of pure python descriptive statistics and vector algebra.*

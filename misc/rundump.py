@@ -27,5 +27,5 @@ for i in classes:
 r.write(s)
 q.close()
     
-print functions
-print classes
+print(functions)
+print(classes)

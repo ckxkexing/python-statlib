@@ -18,7 +18,7 @@ class TestStatlib(unittest.TestCase):
     def setUp(self):
         "Gets called on each test"
         # generate list data
-        self.L  = self.LF = range( 1, 21 )
+        self.L  = self.LF = list(range( 1, 21))
         self.LF[2] = 3.0
         self.LL = [ self.L ] * 5
 
@@ -26,7 +26,7 @@ class TestStatlib(unittest.TestCase):
         self.A  = self.AF = num_array( self.L )
         self.AA = num_array( self.LL )
         
-        self.M = range(4,24)
+        self.M = list(range(4,24))
         self.M[10] = 34 
         self.B = num_array(self.M)
         
@@ -324,7 +324,7 @@ class TestStatlib(unittest.TestCase):
         
         i = 0
         for d in data1:
-          self.assertEquals( stats.pointbiserialr( d, data2[i] )[i], results[i] )
+          self.assertEqual( stats.pointbiserialr( d, data2[i] )[i], results[i] )
           i += 1
         
     def test_kendalltau(self):
